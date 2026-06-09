@@ -41,6 +41,14 @@ android {
         compose = true
         buildConfig = true
     }
+
+    applicationVariants.all {
+        outputs.all {
+            (this as? com.android.build.gradle.internal.api.BaseVariantOutputImpl)?.let {
+                it.outputFileName = "AlexStudyReminder-v${versionName}.apk"
+            }
+        }
+    }
 }
 
 dependencies {
