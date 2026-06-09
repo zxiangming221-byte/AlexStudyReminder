@@ -19,15 +19,14 @@ class ReminderWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, param
     override fun doWork(): Result {
         val subject = inputData.getString("subject") ?: "学习时间到了"
         val timeRange = inputData.getString("time_range") ?: ""
-        showNotification(subject, timeRange)
+        val mode = inputData.getString("mode") ?: "sound+vibrate"
+        showNotification(subject, timeRange, mode)
         return Result.success()
     }
 
-    private fun showNotification(subject: String, timeRange: String) {
-        // Check permission
-        if (ActivityCompat.checkSelfPermission(
-                applicationContext, Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
+    private fun showNotification(subject: String, timeRange: String, mode: String) {
+        if (ActivityCompat.checkSelfPermission(applicationContext, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
         ) return
 
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
@@ -38,26 +37,33 @@ class ReminderWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, param
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-
-        val notification = NotificationCompat.Builder(
-            applicationContext, StudyPlannerApp.CHANNEL_ID
-        )
+        val builder = NotificationCompat.Builder(applicationContext, StudyPlannerApp.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle(subject)
-            .setContentText("⏰ $timeRange — 到时间了，开始学习吧！")
-            .setStyle(NotificationCompat.BigTextStyle()
-                .bigText("⏰ $timeRange\n\n$subject\n到时间了，开始学习吧！"))
+            .setContentText("⏰ $timeRange — 到时间了！")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("⏰ $timeRange\n\n$subject\n开始学习吧！"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setAutoCancel(true)
             .setContentIntent(pending)
-            .setSound(soundUri)
-            .setVibrate(longArrayOf(0, 400, 200, 400))
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .build()
+
+        // Apply mode
+        when (mode) {
+            "sound+vibrate" -> {
+                builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                builder.setVibrate(longArrayOf(0, 400, 200, 400))
+                builder.setDefaults(NotificationCompat.DEFAULT_ALL)
+            }
+            "vibrate" -> {
+                builder.setVibrate(longArrayOf(0, 400, 200, 400))
+                builder.setDefaults(NotificationCompat.DEFAULT_VIBRATE)
+            }
+            "silent" -> {
+                // No sound, no vibration - just the notification
+            }
+        }
 
         NotificationManagerCompat.from(applicationContext)
-            .notify(subject.hashCode(), notification)
+            .notify(subject.hashCode(), builder.build())
     }
 }

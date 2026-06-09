@@ -58,6 +58,10 @@ private val strings = mapOf(
     "light" to mapOf("zh_CN" to "浅色", "zh_TW" to "淺色", "en" to "Light"),
     "dark" to mapOf("zh_CN" to "深色", "zh_TW" to "深色", "en" to "Dark"),
     "system" to mapOf("zh_CN" to "跟随系统", "zh_TW" to "跟隨系統", "en" to "System"),
+    "rmode" to mapOf("zh_CN" to "提醒模式", "zh_TW" to "提醒模式", "en" to "Reminder Mode"),
+    "rmSound" to mapOf("zh_CN" to "铃声+振动", "zh_TW" to "鈴聲+振動", "en" to "Sound + Vibrate"),
+    "rmVibrate" to mapOf("zh_CN" to "仅振动", "zh_TW" to "僅振動", "en" to "Vibrate Only"),
+    "rmSilent" to mapOf("zh_CN" to "静音通知", "zh_TW" to "靜音通知", "en" to "Silent"),
     "footer" to mapOf("zh_CN" to "让每一分钟都有价值 ✨", "zh_TW" to "讓每一分鐘都有價值 ✨", "en" to "Make every minute count ✨"),
 )
 
@@ -74,6 +78,7 @@ fun SettingsScreen(onBack: () -> Unit) {
     var themeMode by remember { mutableStateOf(Prefs.get(ctx, "theme", "system")) }
     var accentColor by remember { mutableStateOf(Prefs.get(ctx, "accent", "blue")) }
     var remindMin by remember { mutableIntStateOf(Prefs.get(ctx, "remind", "5").toIntOrNull() ?: 5) }
+    var remindMode by remember { mutableStateOf(Prefs.get(ctx, "reminder_mode", "sound+vibrate")) }
 
     val t = { key: String -> str(langCode, key) }
     val remindOptions = listOf(0 to "onTime", 1 to "before1", 5 to "before5", 10 to "before10", 15 to "before15")
@@ -88,6 +93,7 @@ fun SettingsScreen(onBack: () -> Unit) {
         Prefs.set(ctx, "theme", themeMode)
         Prefs.set(ctx, "accent", accentColor)
         Prefs.set(ctx, "remind", remindMin.toString())
+        Prefs.set(ctx, "reminder_mode", remindMode)
     }
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background,
@@ -158,6 +164,24 @@ fun SettingsScreen(onBack: () -> Unit) {
                             if (value == remindMin) Icon(Icons.Filled.CheckCircle, null, tint = SystemBlue, modifier = Modifier.size(20.dp))
                         }
                         if (i < remindOptions.size - 1) HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.08f))
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // ── Reminder Mode ──
+            SectionLabel(t("rmode"))
+            val modeOptions = listOf("sound+vibrate" to "rmSound", "vibrate" to "rmVibrate", "silent" to "rmSilent")
+            Card(shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(0.dp)) {
+                Column {
+                    modeOptions.forEachIndexed { i, (value, key) ->
+                        Row(Modifier.fillMaxWidth().clickable { remindMode = value; saveAndApply() }.padding(horizontal = 16.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text(t(key), fontSize = 15.sp)
+                            if (value == remindMode) Icon(Icons.Filled.CheckCircle, null, tint = SystemBlue, modifier = Modifier.size(20.dp))
+                        }
+                        if (i < modeOptions.size - 1) HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.08f))
                     }
                 }
             }

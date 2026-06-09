@@ -27,6 +27,9 @@ interface StudyTaskDao {
     @Query("UPDATE study_tasks SET isCompleted = :completed WHERE id = :id")
     suspend fun setCompleted(id: Long, completed: Boolean)
 
+    @Query("UPDATE study_tasks SET reminderEnabled = :enabled WHERE id = :id")
+    suspend fun setReminderEnabled(id: Long, enabled: Boolean)
+
     @Query("UPDATE study_tasks SET workRequestId = :requestId WHERE id = :id")
     suspend fun setWorkRequestId(id: Long, requestId: String)
 

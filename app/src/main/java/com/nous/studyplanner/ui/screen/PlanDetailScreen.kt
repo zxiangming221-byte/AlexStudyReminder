@@ -11,6 +11,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material3.*
@@ -104,20 +106,39 @@ private fun TaskCard(task: StudyTask, onToggle: () -> Unit, index: Int) {
     val s by animateFloatAsState(if (visible) 1f else 0.92f, spring(dampingRatio = 0.5f, stiffness = 200f), label = "ts")
     LaunchedEffect(Unit) { kotlinx.coroutines.delay((index * 30).toLong()); visible = true }
     val c = RainbowGradient[index % 6]
-    Card(Modifier.fillMaxWidth().scale(s).clickable(onClick = onToggle), shape = RoundedCornerShape(14.dp),
+    val app = LocalContext.current.applicationContext as android.app.Application
+    val entryPoint = remember { dagger.hilt.android.EntryPointAccessors.fromApplication(app, com.nous.studyplanner.di.AppEntryPoint::class.java) }
+    val taskDao = remember { entryPoint.studyTaskDao() }
+    val scope = rememberCoroutineScope()
+
+    Card(Modifier.fillMaxWidth().scale(s), shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = if (task.isCompleted) MaterialTheme.colorScheme.surface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(0.dp)) {
-        Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.clip(RoundedCornerShape(8.dp)).background(if (task.isCompleted) SystemGray5 else c.copy(alpha = 0.1f)).padding(horizontal = 10.dp, vertical = 6.dp)) {
-                Text("${task.startTime}-${task.endTime}", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (task.isCompleted) SystemGray else c.copy(alpha = 0.85f))
+        Column {
+            Row(Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.clip(RoundedCornerShape(8.dp)).background(if (task.isCompleted) SystemGray5 else c.copy(alpha = 0.1f)).padding(horizontal = 10.dp, vertical = 6.dp)) {
+                    Text("${task.startTime}-${task.endTime}", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (task.isCompleted) SystemGray else c.copy(alpha = 0.85f))
+                }
+                Spacer(Modifier.width(10.dp))
+                Text(task.subject, Modifier.weight(1f), fontSize = 15.sp,
+                    fontWeight = if (task.isCompleted) FontWeight.Normal else FontWeight.Medium,
+                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                    color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurface)
+                Icon(if (task.isCompleted) Icons.Filled.CheckCircle else Icons.Outlined.Circle, "状态",
+                    tint = if (task.isCompleted) SystemGreen else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f), modifier = Modifier.size(22.dp))
             }
-            Spacer(Modifier.width(10.dp))
-            Text(task.subject, Modifier.weight(1f), fontSize = 15.sp,
-                fontWeight = if (task.isCompleted) FontWeight.Normal else FontWeight.Medium,
-                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
-                color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurface)
-            Icon(if (task.isCompleted) Icons.Filled.CheckCircle else Icons.Outlined.Circle, "状态",
-                tint = if (task.isCompleted) SystemGreen else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f), modifier = Modifier.size(22.dp))
+            // Reminder toggle row
+            Row(Modifier.fillMaxWidth().clickable { scope.launch { taskDao.setReminderEnabled(task.id, !task.reminderEnabled) } }
+                .padding(start = 16.dp, end = 16.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    if (task.reminderEnabled) Icons.Filled.Notifications
+                    else Icons.Filled.Block,
+                    "提醒", tint = if (task.reminderEnabled) SystemBlue.copy(alpha = 0.7f) else SystemGray.copy(alpha = 0.4f),
+                    modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(if (task.reminderEnabled) "已开启提醒" else "已关闭提醒",
+                    fontSize = 11.sp, color = if (task.reminderEnabled) SystemBlue.copy(alpha = 0.7f) else SystemGray)
+            }
         }
     }
 }

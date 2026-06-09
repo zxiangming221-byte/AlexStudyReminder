@@ -2,12 +2,15 @@ package com.nous.studyplanner.ui.screen
 
 import android.app.Application
 import androidx.compose.animation.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.*
@@ -118,6 +121,74 @@ fun CreatePlanScreen(onPlanCreated: () -> Unit, onBack: () -> Unit) {
                     }
                 }
             }
+
+            // ── Manual single-task entry ──
+            Spacer(Modifier.height(24.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+            Spacer(Modifier.height(16.dp))
+            Text("或手动添加单条任务", fontWeight = FontWeight.SemiBold, fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            var manDate by remember { mutableStateOf("") }
+            var manStart by remember { mutableStateOf("") }
+            var manEnd by remember { mutableStateOf("") }
+            var manSubject by remember { mutableStateOf("") }
+            var manReminder by remember { mutableStateOf(true) }
+
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(manDate, { manDate = it }, label = { Text("日期") }, placeholder = { Text("6月8日") },
+                    modifier = Modifier.weight(1f), singleLine = true, shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SystemBlue, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                        focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface))
+                OutlinedTextField(manStart, { manStart = it }, label = { Text("开始") }, placeholder = { Text("08:00") },
+                    modifier = Modifier.weight(1f), singleLine = true, shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SystemBlue, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                        focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface))
+                OutlinedTextField(manEnd, { manEnd = it }, label = { Text("结束") }, placeholder = { Text("10:00") },
+                    modifier = Modifier.weight(1f), singleLine = true, shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SystemBlue, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                        focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface))
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(manSubject, { manSubject = it }, label = { Text("科目") }, placeholder = { Text("数学刷题") },
+                    modifier = Modifier.weight(1f), singleLine = true, shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SystemBlue, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                        focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface))
+                Spacer(Modifier.width(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { manReminder = !manReminder }) {
+                    Icon(if (manReminder) Icons.Filled.Notifications else Icons.Filled.Block,
+                        null, tint = if (manReminder) SystemBlue else SystemGray, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(if (manReminder) "提醒" else "不提醒", fontSize = 12.sp,
+                        color = if (manReminder) SystemBlue else SystemGray)
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = {
+                scope.launch {
+                    val parsed = parser.parse("${manDate}\n${manStart}-${manEnd} ${manSubject}")
+                    if (parsed.entries.isEmpty()) return@launch
+                    val plan = StudyPlan(title = manSubject.ifBlank { "手动任务" }, rawText = "")
+                    val planId = planDao.insert(plan)
+                    val entry = parsed.entries.first()
+                    val task = StudyTask(planId = planId, date = entry.date, startTime = entry.startTime,
+                        endTime = entry.endTime, subject = entry.subject, reminderEnabled = manReminder)
+                    taskDao.insertAll(listOf(task))
+                    if (manReminder) {
+                        val saved = taskDao.getTasksByPlanIdAsList(planId)
+                        saved.forEach { t -> ReminderScheduler.schedule(app, t) }
+                    }
+                    saved = true
+                }
+            }, enabled = manSubject.isNotBlank() && manStart.isNotBlank() && manEnd.isNotBlank(),
+                modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = SystemBlue),
+                contentPadding = PaddingValues(vertical = 12.dp)) {
+                Text("添加任务", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            }
+
             Spacer(Modifier.height(40.dp))
         }
     }
