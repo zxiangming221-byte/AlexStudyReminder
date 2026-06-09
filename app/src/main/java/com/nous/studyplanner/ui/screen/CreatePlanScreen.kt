@@ -151,7 +151,7 @@ fun CreatePlanScreen(onPlanCreated: () -> Unit, onBack: () -> Unit) {
             }
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(manSubject, { manSubject = it }, label = { Text("科目") }, placeholder = { Text("数学刷题") },
+                OutlinedTextField(manSubject, { manSubject = it }, label = { Text("任务名") }, placeholder = { Text("数学刷题") },
                     modifier = Modifier.weight(1f), singleLine = true, shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SystemBlue, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
                         focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface))
