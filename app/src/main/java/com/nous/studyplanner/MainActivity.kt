@@ -11,6 +11,8 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Start foreground reminder service
+        ReminderForegroundService.start(this)
         setContent {
             StudyPlannerTheme {
                 NavGraph()

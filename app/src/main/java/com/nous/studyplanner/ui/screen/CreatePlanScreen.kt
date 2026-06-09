@@ -110,7 +110,6 @@ fun CreatePlanScreen(onPlanCreated: () -> Unit, onBack: () -> Unit) {
                                     val tasks = r.entries.map { e -> StudyTask(planId = planId, date = e.date, startTime = e.startTime, endTime = e.endTime, subject = e.subject) }
                                     taskDao.insertAll(tasks)
                                     val savedTasks = taskDao.getTasksByPlanIdAsList(planId)
-                                    savedTasks.forEach { t -> val rid = ReminderScheduler.schedule(app, t); if (rid.isNotEmpty()) taskDao.setWorkRequestId(t.id, rid) }
                                     saved = true
                                 }
                             }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
@@ -176,10 +175,6 @@ fun CreatePlanScreen(onPlanCreated: () -> Unit, onBack: () -> Unit) {
                     val task = StudyTask(planId = planId, date = entry.date, startTime = entry.startTime,
                         endTime = entry.endTime, subject = entry.subject, reminderEnabled = manReminder)
                     taskDao.insertAll(listOf(task))
-                    if (manReminder) {
-                        val saved = taskDao.getTasksByPlanIdAsList(planId)
-                        saved.forEach { t -> ReminderScheduler.schedule(app, t) }
-                    }
                     saved = true
                 }
             }, enabled = manSubject.isNotBlank() && manStart.isNotBlank() && manEnd.isNotBlank(),

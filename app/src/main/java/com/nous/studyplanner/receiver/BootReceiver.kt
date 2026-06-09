@@ -3,11 +3,12 @@ package com.nous.studyplanner.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.nous.studyplanner.ReminderForegroundService
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            // WorkManager auto-restores pending work on boot
+            ReminderForegroundService.start(context)
         }
     }
 }
