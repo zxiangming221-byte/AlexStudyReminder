@@ -3,7 +3,9 @@ package com.nous.studyplanner
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.util.Log
 import androidx.work.Configuration
+import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
@@ -12,11 +14,18 @@ class StudyPlannerApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        // Force-init WorkManager so scheduling never silently fails
+        try {
+            WorkManager.getInstance(this)
+        } catch (e: Exception) {
+            Log.e("StudyPlannerApp", "WorkManager init failed, retrying manual", e)
+            WorkManager.initialize(this, workManagerConfiguration)
+        }
     }
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
-            .setMinimumLoggingLevel(android.util.Log.INFO)
+            .setMinimumLoggingLevel(Log.DEBUG)
             .build()
 
     private fun createNotificationChannel() {
@@ -29,7 +38,9 @@ class StudyPlannerApp : Application(), Configuration.Provider {
                 setShowBadge(true)
             }
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("StudyPlannerApp", "Channel creation failed", e)
+        }
     }
 
     companion object {

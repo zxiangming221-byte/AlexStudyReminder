@@ -14,8 +14,8 @@ android {
         applicationId = "com.nous.studyplanner"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.0.7-notify"
+        versionCode = 9
+        versionName = "1.0.8"
     }
 
     buildTypes {
@@ -39,6 +39,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

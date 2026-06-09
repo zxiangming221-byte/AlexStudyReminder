@@ -1,6 +1,7 @@
 package com.nous.studyplanner.worker
 
 import android.content.Context
+import android.util.Log
 import androidx.work.*
 import com.nous.studyplanner.data.entity.StudyTask
 import java.time.LocalDate
@@ -21,8 +22,13 @@ object ReminderScheduler {
 
             val delay = scheduledTime.toInstant().toEpochMilli() - System.currentTimeMillis()
 
+            Log.d("ReminderScheduler", "Scheduling: ${task.subject} at $scheduledTime, delay=${delay}ms (${delay / 60000}min)")
+
             // Skip if already past
-            if (delay <= 0) return ""
+            if (delay <= 0) {
+                Log.w("ReminderScheduler", "Task ${task.subject} is in the past, skipping")
+                return ""
+            }
 
             val data = Data.Builder()
                 .putLong("task_id", task.id)
@@ -38,6 +44,7 @@ object ReminderScheduler {
                 .build()
 
             WorkManager.getInstance(context).enqueue(request)
+            Log.d("ReminderScheduler", "Enqueued: ${task.subject}, requestId=${request.id}")
             return request.id.toString()
         } catch (e: Exception) {
             return ""
