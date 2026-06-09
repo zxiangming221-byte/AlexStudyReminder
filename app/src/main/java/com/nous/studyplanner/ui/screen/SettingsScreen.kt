@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nous.studyplanner.ui.theme.*
+import com.nous.studyplanner.ui.theme.ThemeRefresh
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -94,6 +95,7 @@ fun SettingsScreen(onBack: () -> Unit) {
         Prefs.set(ctx, "accent", accentColor)
         Prefs.set(ctx, "remind", remindMin.toString())
         Prefs.set(ctx, "reminder_mode", remindMode)
+        ThemeRefresh.bump()
     }
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background,
